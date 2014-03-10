@@ -213,8 +213,17 @@ class Application:
         use_ssh = self.settings[cluster]['use_ssh']
 
         ssh_user = self.settings[cluster].get('ssh_user', None)
-        for hipache_config in self.settings['default']['hipaches']:
-            hipache_host, hipache_port = hipache_config.split(':')
+        if os.environ["REDIS_PORT_6379_TCP_ADDR"]:
+            hipache_host = os.environ["REDIS_PORT_6379_TCP_ADDR"]
+            hipache_port = os.environ["REDIS_PORT_6379_TCP_PORT"]
+            self.hipaches.append(Hipache(hipache_host, int(hipache_port), ssh_user=ssh_user, use_ssh=use_ssh))
+        elif 'hipaches' in self.settings['default'].keys():
+            for hipache_config in self.settings['default']['hipaches']:
+                hipache_host, hipache_port = hipache_config.split(':')
+                self.hipaches.append(Hipache(hipache_host, int(hipache_port), ssh_user=ssh_user, use_ssh=use_ssh))
+        else:
+            hipache_host = "127.0.0.1"
+            hipache_port = "6379"
             self.hipaches.append(Hipache(hipache_host, int(hipache_port), ssh_user=ssh_user, use_ssh=use_ssh))
 
         release_name = self.config.get('release_name', None)
