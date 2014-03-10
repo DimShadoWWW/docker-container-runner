@@ -18,16 +18,23 @@ class DockerDaemon:
         except ValueError:
             hostname = host
 
-        self.host_name, self.host_port = hostname.split(":")
-        self.host = host
-        self.registry_login = registry_login
-        self.ssh_user = ssh_user
+        if protocol == "http:":
+            self.host_name, self.host_port = hostname.split(":")
+            self.host = host
+            self.registry_login = registry_login
+            self.ssh_user = ssh_user
 
-        if ssh:
-            forwarder = create_tunnel(self.host_name, self.host_port, ssh_user)
-            entrypoint = "http://{}".format(forwarder.bind_string)
+            if ssh:
+                forwarder = create_tunnel(self.host_name, self.host_port, ssh_user)
+                entrypoint = "http://{}".format(forwarder.bind_string)
+            else:
+                entrypoint = "http://{}:{}".format(self.host_name, self.host_port)
+        elif protocol == "unix:":
+            entrypoint = host
+            self.host_name = "local"
         else:
-            entrypoint = "http://{}:{}".format(self.host_name, self.host_port)    
+            print "Docker access protocol not recognized"
+            sys.exit(1)
 
         self.connection = docker.Client(base_url=entrypoint, version="1.7")
 
